@@ -16,8 +16,5 @@ namespace Persistencia
 
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
-         public DbSet<Rol> Roles { get; set; }
-        public DbSet<Usuario> Usuarios { get; set; }
-        public DbSet<UsuarioRoles> UsuariosRoles { get; set; }
     }
 }

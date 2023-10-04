@@ -1,6 +1,4 @@
 using API.Extensions;
-using API.Helpers;
-using API.Helpers.Errors;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Persistencia;
@@ -27,21 +25,14 @@ builder.Services.AddControllers(options =>
 	options.ReturnHttpNotAcceptable = true;
 }).AddXmlSerializerFormatters();
 
-builder.Services.AddValidationErrors();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.ConfigureCors();
 
-builder.Services.AddJwt(builder.Configuration);
 
-builder.Services.AddAuthorization(opts =>{
-    opts.DefaultPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .AddRequirements(new GlobalVerbRoleRequirement())
-        .Build();
-});
 builder.Services.AddAplicacionServices();
 builder.Services.AddDbContext<DbAppContext>(options =>
 {
@@ -50,8 +41,6 @@ builder.Services.AddDbContext<DbAppContext>(options =>
 });
 
 var app = builder.Build();
-
-app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseStatusCodePagesWithReExecute("/errors/{0}");
 
