@@ -9,7 +9,13 @@ namespace Persistencia
     {
         public DbAppContext(DbContextOptions options) : base(options)
         {
+            
         }
+
+
+        public DbSet<Archivo> Archivos { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
