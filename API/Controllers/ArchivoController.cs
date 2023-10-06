@@ -31,60 +31,41 @@ public class ArchivoController : BaseApiController
         }
     }
 
-
-    [HttpPost, Route("SubirDocumento")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]   
-    public async Task<ActionResult> SubirDocumento([FromForm] IFormFile fichero)
+[HttpPost, Route("SubirDocumento")]
+[ProducesResponseType(StatusCodes.Status201Created)]
+[ProducesResponseType(StatusCodes.Status400BadRequest)]   
+public async Task<ActionResult> SubirDocumento([FromForm] IFormFile fichero)
+{
+    try
     {
-        try
+        if (fichero == null)
         {
-            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
-            if (!Directory.Exists(rutaDestino)) Directory.CreateDirectory(rutaDestino);
-            string rutaDestinoCompleta = Path.Combine(rutaDestino, fichero.FileName);
-
-            if(fichero.Length > 0)
-            {
-                using var stream = new FileStream(rutaDestinoCompleta, FileMode.Create);
-                fichero.CopyTo(stream);  
-            }
-            
-            long tam = fichero.Length;
-            var archivo = new Archivo
-            {
-                Nombre = Path.GetFileNameWithoutExtension(fichero.FileName),
-                Extension = Path.GetExtension(fichero.FileName).Substring(1),
-                Tamanio = (double)tam / 1024,
-                Ubicacion = rutaDestinoCompleta
-            };
-
-            // Guardar el archivo en la base de datos
-            _unitOfWork.Archivos.Add(archivo);
-            await _unitOfWork.SaveAsync();
-
-            return Ok($"{fichero.FileName} se ha subido correctamente");
+            return BadRequest("No se proporcionó un archivo válido.");
         }
-        catch (Exception) {
-            return BadRequest();
-        }
+        string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
+        Archivo archivo = _unitOfWork.Archivos.SaveDocument(fichero,rutaDestino);
+        // Guardar el archivo en la base de datos
+        _unitOfWork.Archivos.Add(archivo);
+        await _unitOfWork.SaveAsync();
+
+        return CreatedAtAction(nameof(SubirDocumento), new { id = archivo.Id }, $"{fichero.FileName} se ha subido correctamente");
     }
+    catch (Exception e)
+    {
+        return BadRequest($"Error al subir el archivo: {e.StackTrace}");
+    }
+}
 
     //Subir Documentos en Base64
     [HttpPost, Route("SubirDocumentoB64")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]   
-    public  ActionResult SubirDocumentoB64([FromForm] string base64,[FromForm] string nombreFichero)
+    public ActionResult SubirDocumentoB64([FromForm] string base64,[FromForm] string nombreFichero)
     {
         try
         {
-            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
-            if (!Directory.Exists(rutaDestino)) Directory.CreateDirectory(rutaDestino);
-            string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
-
-            byte[] documento = Convert.FromBase64String(base64);
-            System.IO.File.WriteAllBytes(rutaDestinoCompleta, documento);
-            
-            return Ok("Docuemto se ha subido correctamente");
+            _unitOfWork.Archivos.SaveDocumentB64(base64, nombreFichero);
+            return Ok("El Documento se ha subido correctamente");
         }
         catch (Exception) {
             return BadRequest();
@@ -98,10 +79,7 @@ public class ArchivoController : BaseApiController
     {
         try
         {
-            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
-            string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
-            
-            byte[] bytes = System.IO.File.ReadAllBytes(rutaDestinoCompleta);
+            byte[] bytes = _unitOfWork.Archivos.GetDocument(nombreFichero);
             return File(bytes, "application/octet-stream", nombreFichero);
         }
         catch (Exception) {
@@ -117,12 +95,7 @@ public class ArchivoController : BaseApiController
     {
         try
         {
-            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
-            string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
-
-            byte[] bytes = System.IO.File.ReadAllBytes(rutaDestinoCompleta);
-            var base64String = Convert.ToBase64String(bytes);
-            
+            string base64String = _unitOfWork.Archivos.GetDocumentB64(nombreFichero);
             return Ok(base64String);
         }
         catch (Exception) {
