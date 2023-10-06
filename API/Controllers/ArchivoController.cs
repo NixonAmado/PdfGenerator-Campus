@@ -1,22 +1,24 @@
+
 using Dominio.Entities;
 using Dominio.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+
 namespace API.Controllers;
 
 public class ArchivoController : BaseApiController
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IWebHostEnvironment _webHostEnvironment;
 
-    public ArchivoController( IUnitOfWork unitOfWork)
+    public ArchivoController(IWebHostEnvironment webHostEnvironment, IUnitOfWork unitOfWork)
     {
+        _webHostEnvironment = webHostEnvironment;
         _unitOfWork = unitOfWork;
     }
 
-    [HttpGet("ObtenerArchivos")]
+    [HttpGet("ObtenerDocumentos")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-
     public  async Task<IActionResult> Get()
     {
         try
@@ -28,33 +30,103 @@ public class ArchivoController : BaseApiController
             return BadRequest(ex.Message);
         }
     }
-    [HttpPost("EnviarArchivos")]
+
+
+    [HttpPost, Route("SubirDocumento")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]    
-    //el metodo tiene que ser una action result
-    public async Task<IActionResult> PostArchivos([FromForm]List<IFormFile> files) // lo recibimos de un formulario, recibimos una lista IFormFiles que llamamos files
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]   
+    public async Task<ActionResult> SubirDocumento([FromForm] IFormFile fichero)
     {
-        // crea una lista de nuestro modelo ya que podemos recibir multiples archivos
-        //lo que le devolvemos al usuario una vez inserte (archivos)
         try
         {
-            if (files.Count > 0) // se insertan archivos si existen 
-            {
-                var archivos = await _unitOfWork.Archivos.FilesToDb(files); 
-                //la incercion a la bd lo cual lo haremos con entity framework
-                _unitOfWork.Archivos.AddRange(archivos);
-                await _unitOfWork.SaveAsync();//hacemos la persistencia de datos 
-                return Ok(archivos);
+            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
+            if (!Directory.Exists(rutaDestino)) Directory.CreateDirectory(rutaDestino);
+            string rutaDestinoCompleta = Path.Combine(rutaDestino, fichero.FileName);
 
+            if(fichero.Length > 0)
+            {
+                using var stream = new FileStream(rutaDestinoCompleta, FileMode.Create);
+                fichero.CopyTo(stream);  
             }
-            else{
-                return BadRequest("No se han encotrado archivos para insertar");
-            }
+            
+            long tam = fichero.Length;
+            var archivo = new Archivo
+            {
+                Nombre = Path.GetFileNameWithoutExtension(fichero.FileName),
+                Extension = Path.GetExtension(fichero.FileName).Substring(1),
+                Tamanio = (double)tam / 1024,
+                Ubicacion = rutaDestinoCompleta
+            };
+
+            // Guardar el archivo en la base de datos
+            _unitOfWork.Archivos.Add(archivo);
+            await _unitOfWork.SaveAsync();
+
+            return Ok($"{fichero.FileName} se ha subido correctamente");
         }
-        catch (Exception ex)//manejo de errores
-        {
-            return BadRequest(ex.Message);
+        catch (Exception) {
+            return BadRequest();
         }
     }
-    
+
+    //Subir Documentos en Base64
+    [HttpPost, Route("SubirDocumentoB64")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]   
+    public  ActionResult SubirDocumentoB64([FromForm] string base64,[FromForm] string nombreFichero)
+    {
+        try
+        {
+            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
+            if (!Directory.Exists(rutaDestino)) Directory.CreateDirectory(rutaDestino);
+            string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
+
+            byte[] documento = Convert.FromBase64String(base64);
+            System.IO.File.WriteAllBytes(rutaDestinoCompleta, documento);
+            
+            return Ok("Docuemto se ha subido correctamente");
+        }
+        catch (Exception) {
+            return BadRequest();
+        }
+    }
+
+    [HttpPost("BajarDocumento")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]   
+    public  ActionResult BajarDocumento([FromForm] string nombreFichero)
+    {
+        try
+        {
+            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
+            string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
+            
+            byte[] bytes = System.IO.File.ReadAllBytes(rutaDestinoCompleta);
+            return File(bytes, "application/octet-stream", nombreFichero);
+        }
+        catch (Exception) {
+            return BadRequest();
+        }
+    }
+
+    //Bajar Documentos en Base64
+    [HttpPost("BajarDocumentoB64")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]   
+    public  ActionResult BajarDocumentoB64([FromForm] string nombreFichero)
+    {
+        try
+        {
+            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
+            string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
+
+            byte[] bytes = System.IO.File.ReadAllBytes(rutaDestinoCompleta);
+            var base64String = Convert.ToBase64String(bytes);
+            
+            return Ok(base64String);
+        }
+        catch (Exception) {
+            return BadRequest();
+        }
+    }
 }
