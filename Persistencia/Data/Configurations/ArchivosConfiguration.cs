@@ -12,16 +12,14 @@ public class AddressConfiguration : IEntityTypeConfiguration<Archivo>
     public void Configure(EntityTypeBuilder<Archivo> builder)
     {
         builder.ToTable("Archivo");
-        builder.Property(key => key.Id)
-        .IsRequired();
-    
+        
         builder.Property(p => p.Nombre)
         .IsRequired()
-        .HasColumnType("varchar(50)");
+        .HasColumnType("varchar(200)");
 
         builder.Property(p => p.Extension)
         .IsRequired()
-        .HasColumnType("varchar(5)");
+        .HasColumnType("varchar(10)");
 
         builder.Property(p => p.Tamanio)
         .IsRequired()
@@ -29,6 +27,6 @@ public class AddressConfiguration : IEntityTypeConfiguration<Archivo>
 
         builder.Property(p => p.Ubicacion)
         .IsRequired()
-        .HasColumnType("text");
+        .HasColumnType("longtext");
     }
 }
