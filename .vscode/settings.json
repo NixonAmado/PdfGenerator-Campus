@@ -1,3 +1,6 @@
 {
-    "dotnet.defaultSolution": "skeleton-app-webapi.sln"
+    "dotnet.defaultSolution": "skeleton-app-webapi.sln",
+    "conventionalCommits.scopes": [
+        "README"
+    ]
 }
