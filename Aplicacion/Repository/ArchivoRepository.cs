@@ -2,7 +2,6 @@ using Dominio.Entities;
 using Dominio.Interfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Persistencia;
 
@@ -11,25 +10,15 @@ public class ArchivoRepository : GenericRepository<Archivo>, IArchivo
 {
     private readonly DbAppContext _context;
     private readonly IWebHostEnvironment _webHostEnvironment;
-    public ArchivoRepository(DbAppContext context ) : base(context)
-    {
-        this._context = context;
-    }
-   
+    
     public ArchivoRepository(DbAppContext context, IWebHostEnvironment webHostEnvironment ) : base(context)
     {
-        this._context = context;
-        this._webHostEnvironment = webHostEnvironment;
-    }
-
-    public async  Task<IEnumerable<Archivo>> ToListAsync()
-    {
-        return await _context.Archivos.ToListAsync();
+        _context = context;
+        _webHostEnvironment = webHostEnvironment;
     }
 
     public Archivo SaveDocument (IFormFile fichero, string rutaDestino)
     {
-        System.Diagnostics.Debug.WriteLine($"Ruta Destino: {rutaDestino}");
         if (!Directory.Exists(rutaDestino)) Directory.CreateDirectory(rutaDestino);
         string rutaDestinoCompleta = Path.Combine(rutaDestino, fichero.FileName);
         if(fichero.Length > 0)
@@ -42,7 +31,7 @@ public class ArchivoRepository : GenericRepository<Archivo>, IArchivo
         Archivo archivo = new()
         {
             Nombre = Path.GetFileNameWithoutExtension(fichero.FileName),
-            Extension = Path.GetExtension(fichero.FileName).Substring(1),
+            Extension = Path.GetExtension(fichero.FileName)[1..],
             Tamanio = (double)tam / 1024,
             Ubicacion = rutaDestinoCompleta
         };
@@ -50,34 +39,22 @@ public class ArchivoRepository : GenericRepository<Archivo>, IArchivo
         return archivo;
     }
 
-    public void SaveDocumentB64 (string base64, string nombreFichero)
-    {
-            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
-            if (!Directory.Exists(rutaDestino)) Directory.CreateDirectory(rutaDestino);
-            string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
 
-            byte[] documento = Convert.FromBase64String(base64);
-            System.IO.File.WriteAllBytes(rutaDestinoCompleta, documento);
-            
-    }
-
-    public byte[] GetDocument (string nombreFichero)
+    //Bajar Documentos
+    public async Task<byte[]> GetDocument (string nombreFichero)
     {
-        string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
+        var Nombre = Path.GetFileNameWithoutExtension(nombreFichero);
+
+        string rutaDestino = await _context.Archivos
+                            .Where(a => a.Nombre == Nombre)
+                            .Select(a => a.Ubicacion)
+                            .SingleOrDefaultAsync();
+        
         string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
         
-        byte[] bytes = System.IO.File.ReadAllBytes(rutaDestinoCompleta);
+        byte[] bytes = File.ReadAllBytes(rutaDestinoCompleta);
         
        return bytes;
-    }
-        public string  GetDocumentB64 (string nombreFichero)
-    {
-        string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
-        string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
-        byte[] bytes = System.IO.File.ReadAllBytes(rutaDestinoCompleta);
-        var base64String = Convert.ToBase64String(bytes);
-        
-       return base64String;
     }
 }
 
