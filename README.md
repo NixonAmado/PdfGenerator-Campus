@@ -4,9 +4,8 @@ Descripción
 Este proyecto proporciona una aplicación que permite a los usuarios subir, descargar y gestionar archivos. La aplicación está diseñada para ser una solución simple y efectiva para el almacenamiento y gestión de archivos en una aplicación web. Los usuarios pueden cargar archivos, ver una lista de archivos existentes, descargar archivos y eliminar archivos no deseados.
 
 Archivo.cs
-![Texto alternativo](./Capturas/entity.png)
-
 Esta clase representa una entidad de archivo en el dominio de la aplicación. Almacena información sobre un archivo, como su nombre, extensión, tamaño y ubicación.
+![Texto alternativo](./Capturas/entity.png)
 
 IArchivo.cs
 Esta interfaz define los métodos que deben implementarse para manejar archivos en la aplicación. Incluye métodos para guardar documentos, obtener documentos y otros métodos relacionados con archivos.
