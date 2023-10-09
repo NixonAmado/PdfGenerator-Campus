@@ -1,6 +1,5 @@
 using Dominio.Entities;
 using Dominio.Interfaces;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Persistencia;
@@ -9,12 +8,10 @@ namespace Aplicacion.Repository;
 public class ArchivoRepository : GenericRepository<Archivo>, IArchivo
 {
     private readonly DbAppContext _context;
-    private readonly IWebHostEnvironment _webHostEnvironment;
     
-    public ArchivoRepository(DbAppContext context, IWebHostEnvironment webHostEnvironment ) : base(context)
+    public ArchivoRepository(DbAppContext context ) : base(context)
     {
         _context = context;
-        _webHostEnvironment = webHostEnvironment;
     }
 
     public Archivo SaveDocument (IFormFile fichero, string rutaDestino)
