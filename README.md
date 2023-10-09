@@ -1,11 +1,5 @@
 <h1>SUBIR Y BAJAR ARCHIVOS </h1>
-
-<h2>Descripción</h2>
-<p>Descripción general de tu proyecto. Puedes proporcionar una breve introducción a lo que hace tu aplicación y por qué es útil.</p>
-
-<h2>Capturas de Pantalla</h2>
-<p>A continuación, se presentan algunas capturas de pantalla de las clases principales de la aplicación:</p>
-
+<a>Una vez creado el proyecto empezamos creando la entidad Archivo</a>
 <h3>Archivo.cs</h3>
 <img src="./Capturas/entity.png" alt="Archivo.cs (Dominio.Entities)" width="300">
 <p>Esta clase representa una entidad de archivo en el dominio de la aplicación. Almacena información sobre un archivo, como su nombre, extensión, tamaño y ubicación.</p>
