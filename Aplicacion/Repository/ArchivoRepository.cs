@@ -38,7 +38,7 @@ public class ArchivoRepository : GenericRepository<Archivo>, IArchivo
 
 
     //Bajar Documentos
-    public async Task<byte[]> GetDocument (string nombreFichero)
+    public async Task<byte[]> GetDocument(string nombreFichero)
     {
         var Nombre = Path.GetFileNameWithoutExtension(nombreFichero);
 
@@ -47,9 +47,7 @@ public class ArchivoRepository : GenericRepository<Archivo>, IArchivo
                             .Select(a => a.Ubicacion)
                             .SingleOrDefaultAsync();
         
-        string rutaDestinoCompleta = Path.Combine(rutaDestino, nombreFichero);
-        
-        byte[] bytes = File.ReadAllBytes(rutaDestinoCompleta);
+        byte[] bytes = File.ReadAllBytes(rutaDestino);
         
        return bytes;
     }
