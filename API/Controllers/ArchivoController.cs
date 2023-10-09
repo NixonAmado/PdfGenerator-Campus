@@ -129,4 +129,23 @@ public class ArchivoController : BaseApiController
             return BadRequest();
         }
     }
+
+
+    [HttpDelete("Eliminar/{id}")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var archivo = await _unitOfWork.Archivos.GetByIdAsync(id);
+        if (archivo == null)
+        {
+            return NotFound();
+        }
+
+        _unitOfWork.Archivos.Remove(archivo);
+        await _unitOfWork.SaveAsync();
+
+        return NoContent();
+    }
+
 }
