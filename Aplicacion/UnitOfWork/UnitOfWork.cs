@@ -7,13 +7,14 @@ namespace Aplicacion.UnitOfWork;
 public class UnitOfWork : IUnitOfWork, IDisposable
 {
     private readonly DbAppContext _context;
-    public ArchivoRepository _archivo;
+    public IArchivo _archivo;
 
     public UnitOfWork(DbAppContext context)
     {
         _context = context;
+        
     }
-    
+
     public IArchivo Archivos 
     {
         get

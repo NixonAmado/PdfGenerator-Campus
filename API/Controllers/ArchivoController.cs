@@ -1,4 +1,3 @@
-
 using Dominio.Entities;
 using Dominio.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -16,14 +15,14 @@ public class ArchivoController : BaseApiController
         _unitOfWork = unitOfWork;
     }
 
-    [HttpGet("ObtenerDocumentos")]
+    [HttpGet("ObtenerArchivo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public  async Task<IActionResult> Get()
     {
         try
         {
-            return  Ok( await _unitOfWork.Archivos.ToListAsync()); // obtenemos todo lo que esta insertado en la tabla archivos
+            return  Ok( await _unitOfWork.Archivos.GetAllAsync()); 
         }
         catch(Exception ex)//manejo de errores
         {
@@ -31,55 +30,41 @@ public class ArchivoController : BaseApiController
         }
     }
 
-[HttpPost, Route("SubirDocumento")]
-[ProducesResponseType(StatusCodes.Status201Created)]
-[ProducesResponseType(StatusCodes.Status400BadRequest)]   
-public async Task<ActionResult> SubirDocumento([FromForm] IFormFile fichero)
-{
-    try
-    {
-        if (fichero == null)
-        {
-            return BadRequest("No se proporcionó un archivo válido.");
-        }
-        string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
-        Archivo archivo = _unitOfWork.Archivos.SaveDocument(fichero,rutaDestino);
-        // Guardar el archivo en la base de datos
-        _unitOfWork.Archivos.Add(archivo);
-        await _unitOfWork.SaveAsync();
-
-        return CreatedAtAction(nameof(SubirDocumento), new { id = archivo.Id }, $"{fichero.FileName} se ha subido correctamente");
-    }
-    catch (Exception e)
-    {
-        return BadRequest($"Error al subir el archivo: {e.StackTrace}");
-    }
-}
-
-    //Subir Documentos en Base64
-    [HttpPost, Route("SubirDocumentoB64")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [HttpPost, Route("SubirArchivo")]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]   
-    public ActionResult SubirDocumentoB64([FromForm] string base64,[FromForm] string nombreFichero)
+    public async Task<ActionResult> SubirDocumento([FromForm] IFormFile fichero)
     {
         try
         {
-            _unitOfWork.Archivos.SaveDocumentB64(base64, nombreFichero);
-            return Ok("El Documento se ha subido correctamente");
+            if (fichero == null)
+            {
+                return BadRequest("No se proporcionó un archivo válido.");
+            }
+            string rutaDestino = _webHostEnvironment.ContentRootPath + "\\Files";
+            Archivo archivo = _unitOfWork.Archivos.SaveDocument(fichero, rutaDestino);
+            // Guardar el archivo en la base de datos
+            _unitOfWork.Archivos.Add(archivo);
+            await _unitOfWork.SaveAsync();
+
+            return CreatedAtAction(nameof(SubirDocumento), new { id = archivo.Id }, $"{fichero.FileName} se ha subido correctamente");
         }
-        catch (Exception) {
-            return BadRequest();
+        catch (Exception e)
+        {
+            return BadRequest($"Error al subir el archivo: {e.StackTrace}");
         }
     }
 
-    [HttpPost("BajarDocumento")]
+
+    //Bajar Archivo
+    [HttpPost("BajarArchivo")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]   
-    public  ActionResult BajarDocumento([FromForm] string nombreFichero)
+    public async Task<ActionResult> BajarDocumento([FromForm] string nombreFichero)
     {
         try
         {
-            byte[] bytes = _unitOfWork.Archivos.GetDocument(nombreFichero);
+            byte[] bytes = await _unitOfWork.Archivos.GetDocument(nombreFichero);
             return File(bytes, "application/octet-stream", nombreFichero);
         }
         catch (Exception) {
@@ -87,19 +72,23 @@ public async Task<ActionResult> SubirDocumento([FromForm] IFormFile fichero)
         }
     }
 
-    //Bajar Documentos en Base64
-    [HttpPost("BajarDocumentoB64")]
+
+    //Eliminar Archivo
+    [HttpDelete("Eliminar/{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]   
-    public  ActionResult BajarDocumentoB64([FromForm] string nombreFichero)
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Delete(int id)
     {
-        try
+        var archivo = await _unitOfWork.Archivos.GetByIdAsync(id);
+        if (archivo == null)
         {
-            string base64String = _unitOfWork.Archivos.GetDocumentB64(nombreFichero);
-            return Ok(base64String);
+            return NotFound();
         }
-        catch (Exception) {
-            return BadRequest();
-        }
+
+        _unitOfWork.Archivos.Remove(archivo);
+        await _unitOfWork.SaveAsync();
+
+        return NoContent();
     }
+
 }
